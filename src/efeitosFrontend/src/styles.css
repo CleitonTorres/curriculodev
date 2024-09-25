@@ -23,17 +23,40 @@ body{
     height: 250px;
     background-color: #fff;
 }
-.boxSlime div{
+#slime{
     position: absolute;
     bottom: 0;
     left: 0;
-    background-color: rgba(235, 252, 3, 0.5);
+    background-color: rgba(93, 223, 76, 0.5);
     height: 100px;
     width: 100px;
-    border: 1px solid rgba(235, 252, 3, 01);
+    border: 1px solid rgb(8, 148, 20);
 }
 .animar{
     animation: slime 6s alternate infinite;
+}
+.piscar{
+    animation: olhos 1s alternate infinite;
+}
+
+.mascara{
+    position: relative;
+    width: 100px;
+}
+.olhoE, .olhoD {
+    background-color: rgba(65, 146, 54, 0.5);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    position: absolute;
+}
+.olhoE{
+ top: 30px;
+ left: 20px;
+}
+.olhoD{
+    top: 30px;
+    right: 20px;
 }
 
 @keyframes slime {
@@ -41,17 +64,20 @@ body{
         left: 0;
         border-radius: 0;
     }
-    50%{
+    100%{
         left: 300px;
         border-radius: 50%;
     }
+}
+
+@keyframes olhos {
+    0%{
+        height: 20px;
+    }
+    50%{
+        height: 15px;
+    }
     100%{
-        width: 0;
-        height: 0;
-        border-top: none;
-        border-left: 50px solid transparent;
-        border-right: 50px solid transparent;
-        background-color: transparent;
-        border-bottom: 100px solid rgba(235, 252, 3, 0.5);
+        height: 5px;
     }
 }
