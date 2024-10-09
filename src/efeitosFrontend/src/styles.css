@@ -30,14 +30,23 @@ body{
     background-color: rgba(93, 223, 76, 0.5);
     height: 100px;
     width: 100px;
-    border: 1px solid rgb(8, 148, 20);
+    border: 1px solid rgb(9, 172, 22);
+    box-shadow: 0px 10px 5px 0px rgba(103,156,28,0.75);
 }
+
+/* animações */
 .animar{
     animation: slime 6s alternate infinite;
+    animation-fill-mode: forwards;
 }
 .piscar{
     animation: olhos 1s alternate infinite;
 }
+.jump{
+    animation: jump 1s alternate;
+    animation-fill-mode: forwards;
+}
+/* ------ */
 
 .mascara{
     position: relative;
@@ -61,12 +70,17 @@ body{
 
 @keyframes slime {
     0%{
-        left: 0;
+        /* left: 0; */
         border-radius: 0;
+        scale: 1;
+    }
+    50%{
+        scale: 0.8;
     }
     100%{
         left: 300px;
         border-radius: 50%;
+        scale: 0.9;
     }
 }
 
@@ -79,5 +93,17 @@ body{
     }
     100%{
         height: 5px;
+    }
+}
+
+@keyframes jump {
+    0%{
+        bottom: 10px;
+    }
+    50%{
+        bottom: 80px;
+    }
+    100%{
+        bottom: 0px;
     }
 }

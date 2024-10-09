@@ -502,6 +502,33 @@ class Tree {
     }
 }
 
+class Item {
+    constructor(x, y){
+        this.x = x;
+        this.y = y;
+        this.currentFrame = 0;
+        this.animationFrame = 0;
+        this.lastTime = 0;
+        this.sprites = [new Image()];
+        for (let index = 0; index < this.sprites.length; index++) {
+            this.sprites[index].src = `../assets/scoutPlat/caixa/caixa(${index}).png`;
+        }
+    }
+    draw(ctx, gridSize){
+        ctx.drawImage(
+            this.sprites[this.currentFrame], 
+            this.x * gridSize, 
+            this.y * gridSize, 
+            32, 32
+        );
+
+        if (this.animationFrame % 20 === 0) { // Altere 10 para ajustar a velocidade da animação
+            this.currentFrame = (this.currentFrame + 1) % this.sprites.length;
+        }
+        this.animationFrame++;
+    }
+}
+
 function Game(){
     const speedInput = document.getElementById('speedInput');
     const canvas = document.getElementById('gameCanvas');
@@ -533,7 +560,8 @@ function Game(){
     ];
     const treesForeground = [
         new Tree(9, 7.2, gridSize+10, gridSize*2)
-    ]
+    ];
+    const itens = new Item(5, 6.5);
 
     //criação dos inimigos
     const enemies = [];
@@ -621,6 +649,7 @@ function Game(){
             isGameover= true;
         }
     }
+
     function winner(){
         const chegou = flag01.x <= player.x && flag01.x+flag01.width >= player.x && flag01.y === player.y;
         if(chegou && player.yVelocity >= 0){
@@ -707,6 +736,11 @@ function Game(){
         if(isGameover) return;
 
         drawGrounds();        
+
+        itens.draw(ctx, gridSize);
+        if(isCollisionPlayer(itens, player)){
+            console.log("Colidiu")
+        };
 
         player.update(currentTime, gravity, speed, floors, tileCount, gridSize, linhas);
         player.draw(ctx, gridSize);
