@@ -89,13 +89,14 @@ function playEfeitos(newSource, volume=0.2) {
 
 // Classe para representar o player
 class Player {
-    constructor(character, initialX, initialY, type="NPC" || "Player") {
+    constructor(character, initialX, initialY, type="NPC" || "Player", showHitBox) {
         this.character = character;
         this.hp = 100;
         this.x = initialX;
         this.y = initialY;
         this.xVelocity = 0;
         this.yVelocity = 0;
+        this.showHitBox = showHitBox;
         this.isJump = false;
         this.isOnFloor = false;
         this.direction = false; // false para direita, true para esquerda
@@ -272,6 +273,54 @@ class Player {
             this.isJump = true;
         }
     }
+
+    isCollisionPlayer(collide, gridSize, ctx) {
+        if(collide === null)return;
+
+        const toleranceX = this.width / 3;
+        const toleranceY = this.height / 3;
+        
+        const playerX1 = (this.x * gridSize)  + toleranceX;
+        const playerX2 = (this.x * gridSize) + this.width - toleranceX;
+        const playerY1 = (this.y * gridSize) + toleranceY;
+        const playerY2 = (this.y * gridSize) + this.height - toleranceY;
+    
+        // Desenha a hitbox no canvas
+        if(this.showHitBox)
+        this.drawHitBox(ctx, playerX1, playerY1, playerX2, playerY2);
+    
+        var colidiuX= false;
+        var colidiuY= false;
+
+        //verifica a colisão para cada pixel do objeto em X.
+        for (let index = 0; index <= collide.width; index++) {
+            const currentPixelX = (collide.x * gridSize) + index;
+
+            if(currentPixelX >= playerX1 && currentPixelX <= playerX2){
+                colidiuX = true;
+                break;
+            }
+        }
+
+        //verifica a colisão para cada pixel do objeto em Y.
+        for (let index = 0; index <= collide.height; index++) {
+            const currentPixelY = (collide.y * gridSize) + index;
+
+            if(currentPixelY >= playerY1 && currentPixelY <= playerY2){
+                colidiuY = true;
+                break;
+            }
+        }
+
+        return colidiuY && colidiuX;
+    }
+
+    // Função para desenhar o hitbox no canvas
+    drawHitBox(ctx, x1, y1, x2, y2) {
+       ctx.strokeStyle = 'green'; // Define a cor da borda
+       ctx.lineWidth = 2;        // Define a espessura da borda
+       ctx.strokeRect(x1, y1, x2 - x1, y2 - y1); // Desenha o retângulo sem preenchimento
+    }
 }
 
 // Classe para representar um inimigo
@@ -280,11 +329,11 @@ class Enemy {
         this.canvas = canvas;
         this.gridSize= gridSize;
         
-        this.x = gridSize + (Math.random() * (canvas.width - gridSize)) ;  // Posição inicial X aleatória
-        this.y = Math.random() * (canvas.height - (gridSize * 5)); // Posição inicial Y aleatória
+        this.x = 1 + (Math.random() * (canvas.width / gridSize));  // Posição inicial X aleatória
+        this.y = Math.random() * 4; // Posição inicial Y aleatória
         
-        this.speedX = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1); // Velocidade X aleatória
-        this.speedY = (Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1); // Velocidade Y aleatória
+        this.speedX = Math.random() / 12; // Velocidade X aleatória
+        this.speedY = Math.random() / 15; // Velocidade Y aleatória
         
         this.currentFrame = 0;
         this.animationFrame = 0;
@@ -327,10 +376,10 @@ class Enemy {
         this.y += this.speedY;
 
         // Verifica se o inimigo saiu da tela e reinicia a posição
-        if (this.x < 0 || this.x > this.canvas.width - this.width) {
+        if (this.x < 0 || (this.x * this.gridSize) > this.canvas.width - this.width) {
             this.speedX *= -1;
         }
-        if (this.y < 0 || this.y > (this.canvas.height - this.gridSize) - this.height) {
+        if (this.y < 0 || (this.y * this.gridSize) > (this.canvas.height - this.gridSize) - this.height) {
             this.speedY *= -1;
         }
     }
@@ -339,7 +388,7 @@ class Enemy {
     draw(ctx) {
         ctx.drawImage(
             this.sprites.bola[this.currentFrame], 
-            this.x, this.y, 
+            this.x * this.gridSize, this.y * this.gridSize, 
             this.width, this.height
         );
 
@@ -347,6 +396,47 @@ class Enemy {
             this.currentFrame = (this.currentFrame + 1) % this.sprites.bola.length;
         }
         this.animationFrame++;
+    }
+
+    isCollision(collide, gridSize, ctx) {
+        if(collide === null)return;
+
+        const toleranceX = this.width / 3;
+        const toleranceY = this.height / 3;
+        
+        const playerX1 = (this.x * gridSize)  + toleranceX;
+        const playerX2 = (this.x * gridSize) + this.width - toleranceX;
+        const playerY1 = (this.y * gridSize) + toleranceY;
+        const playerY2 = (this.y * gridSize) + this.height - toleranceY;
+    
+        // Desenha a hitbox no canvas
+        if(this.showHitBox)
+        this.drawHitBox(ctx, playerX1, playerY1, playerX2, playerY2);
+    
+        var colidiuX= false;
+        var colidiuY= false;
+
+        //verifica a colisão para cada pixel do objeto em X.
+        for (let index = 0; index <= collide.width; index++) {
+            const currentPixelX = (collide.x * gridSize) + index;
+
+            if(currentPixelX >= playerX1 && currentPixelX <= playerX2){
+                colidiuX = true;
+                break;
+            }
+        }
+
+        //verifica a colisão para cada pixel do objeto em Y.
+        for (let index = 0; index <= collide.height; index++) {
+            const currentPixelY = (collide.y * gridSize) + index;
+
+            if(currentPixelY >= playerY1 && currentPixelY <= playerY2){
+                colidiuY = true;
+                break;
+            }
+        }
+
+        return colidiuY && colidiuX;
     }
 }   
 
@@ -356,7 +446,7 @@ class Projectile{
         this.canvas = canvas;
         this.x = x;
         this.y = y;
-        this.projectileSpeed= 5;
+        this.projectileSpeed= 0.1;
         this.direction = direction; // false para direita, true para esquerda
         this.markedForDeletion = false; // Marca o projétil para remoção quando sair da tela
         this.width = 20;
@@ -372,7 +462,7 @@ class Projectile{
     }
 
     // Atualiza a posição do projétil
-    update() {
+    update(gridSize) {
         if (this.direction) {
             this.x -= this.projectileSpeed;
         } else {
@@ -380,16 +470,16 @@ class Projectile{
         }
         
         // Se o projétil sair da tela, marque-o para remoção
-        if (this.x < 0 || this.x > this.canvas.width || this.y < 0 || this.y > this.canvas.height) {
+        if (this.x < 0 || (this.x * gridSize) > this.canvas.width || this.y < 0 || (this.y * gridSize) > this.canvas.height) {
             this.markedForDeletion = true;
         }
     }
 
     // Desenha o projétil no canvas
-    draw(ctx) {
+    draw(ctx, gridSize) {
         ctx.drawImage(
             this.sprites[this.currentFrame], 
-            this.x, this.y, 
+            this.x * gridSize, this.y * gridSize, 
             this.width, this.height
         );
 
@@ -503,11 +593,13 @@ class Tree {
 }
 
 class Item {
-    constructor(x, y){
+    constructor(x, y, width, height){
         this.x = x;
         this.y = y;
         this.currentFrame = 0;
         this.animationFrame = 0;
+        this.width = width;
+        this.height = height;
         this.lastTime = 0;
         this.sprites = [new Image()];
         for (let index = 0; index < this.sprites.length; index++) {
@@ -519,7 +611,7 @@ class Item {
             this.sprites[this.currentFrame], 
             this.x * gridSize, 
             this.y * gridSize, 
-            32, 32
+            this.width, this.height
         );
 
         if (this.animationFrame % 20 === 0) { // Altere 10 para ajustar a velocidade da animação
@@ -541,8 +633,9 @@ function Game(){
     let score = 0;
     let jumpForce = -4.5;
     let gravity = 15;
+    const damage = 0;
     
-    let player = new Player(character, 2, 8, 'Player');
+    let player = new Player(character, 2, 8, 'Player', false);
     let npcBP = new Player("bp", 8, 8, 'NPC');
     
     const nuvens = [
@@ -561,7 +654,13 @@ function Game(){
     const treesForeground = [
         new Tree(9, 7.2, gridSize+10, gridSize*2)
     ];
-    const itens = new Item(5, 6.5);
+    var itens = [
+        new Item(5, 6.5, 32, 32),
+        new Item(8, 3.5, 32, 32),
+        new Item(1, 4.5, 32, 32),
+        new Item(10, 6.5, 32, 32),
+        new Item(12, 1.5, 32, 32)
+    ];
 
     //criação dos inimigos
     const enemies = [];
@@ -670,8 +769,8 @@ function Game(){
     function shoot() {
         // Adiciona um projétil a partir do centro do jogador
         projectiles.push(new Projectile(
-            player.x * gridSize + player.width / 2,
-            player.y * gridSize + player.height / 2,
+            player.x + 0.5,
+            player.y + 0.5,
             player.direction,
             canvas
         ));
@@ -692,59 +791,37 @@ function Game(){
             HP: ${player.hp}<br/>
         `;
 
-        speedLog.innerHTML = `        
-        Direction Y: ${player.direction ? 'left' : 'right'}<br/>
-        isJump: ${player.isJump}<br/>
-        Position: ${parseFloat(player.x).toFixed(2)}, ${parseFloat(player.y).toFixed(2)}<br/>
-        VelocitY: ${parseFloat(player.yVelocity).toFixed(2)}<br/>
-        isOnFloor: ${player.isOnFloor}<br/>
-        Tiles size: ${gridSize}<br/>
-        Col: ${tileCount}<br/>
-        Row: ${linhas}<br/>
-        Disparos: ${projectiles.length}<br/>
-        nuvem: ${nuvens[0].x}<br/>`;        
-    }
-
-    // Função para verificar colisão
-    function isCollision(projectile, enemy) {
-        if(!projectile || !enemy) return false;
-
-        const colidiu = projectile.x < enemy.x + enemy.width && //projectile.x for menor que enemy.x + enemy.enemySize, significa que o projétil pode estar colidindo com o inimigo do lado esquerdo.
-        projectile.x + projectile.width > enemy.x && //significa que o projétil pode estar colidindo com o inimigo do lado direito.
-        projectile.y < enemy.y + enemy.height &&
-        projectile.y + projectile.height > enemy.y;
-
-        return colidiu;
-    }
-    function isCollisionPlayer(objeto, playerTriger) {
-        const playerCenterX = (playerTriger.x * gridSize) + (playerTriger.width / 2);
-        const playerCenterY = (playerTriger.y * gridSize) + (playerTriger.height / 2);
-    
-        // Define uma área menor ao redor do centro do jogador
-        const toleranceX = playerTriger.width / 4; // Pode ajustar o valor de 4 conforme necessário
-        const toleranceY = playerTriger.height / 4;
-    
-        const colidiu = objeto.x + (objeto.width / 2) > playerCenterX - toleranceX &&
-        objeto.x + (objeto.width / 2) < playerCenterX + toleranceX &&
-        objeto.y + (objeto.height / 2) > playerCenterY - toleranceY &&
-        objeto.y + (objeto.height / 2) < playerCenterY + toleranceY;
-
-        return colidiu;
+        // speedLog.innerHTML = `        
+        // Direction Y: ${player.direction ? 'left' : 'right'}<br/>
+        // isJump: ${player.isJump}<br/>
+        // Position: ${parseFloat(player.x).toFixed(2)}, ${parseFloat(player.y).toFixed(2)}<br/>
+        // VelocitY: ${parseFloat(player.yVelocity).toFixed(2)}<br/>
+        // isOnFloor: ${player.isOnFloor}<br/>
+        // Tiles size: ${gridSize}<br/>
+        // Col: ${tileCount}<br/>
+        // Row: ${linhas}<br/>
+        // Disparos: ${projectiles.length}<br/>
+        // nuvem: ${nuvens[0].x}<br/>`;        
     }
 
     function loop(currentTime) {
         if(isGameover) return;
 
-        drawGrounds();        
-
-        itens.draw(ctx, gridSize);
-        if(isCollisionPlayer(itens, player)){
-            console.log("Colidiu")
-        };
+        drawGrounds();            
 
         player.update(currentTime, gravity, speed, floors, tileCount, gridSize, linhas);
         player.draw(ctx, gridSize);
         
+        itens.forEach((i)=> {
+            if(player.isCollisionPlayer(i, gridSize, ctx)){
+                //se colidiu não desenha o item na tela e remove ele do array.
+                score += 1;
+                itens = itens.filter((item)=> item != i) //remove o item do array.
+            }else{
+                i.draw(ctx, gridSize);
+            }
+        });
+
         //verifica se o player chegou no endpoint.
         winner();
 
@@ -753,9 +830,9 @@ function Game(){
             enemy.update();
             enemy.draw(ctx);
 
-            // Verifica colisão com os projeteis
+            // Verifica colisão com os projeteis no inimigo.
             projectiles.forEach(projectile => {
-                if (isCollision(projectile, enemy)) {
+                if (enemy.isCollision(projectile, gridSize, ctx)) {
                     // Ajustar a velocidade do inimigo na direção do projétil
                     if (projectile.direction) {
                         // Projétil disparado para a esquerda
@@ -771,10 +848,11 @@ function Game(){
                 }
             });
 
-            if(isCollisionPlayer(enemy, player)){
-                player.hp = player.hp - 20;
-                enemy.x = 200;
-                enemy.y= 50;
+            //verifica colisão do inimigo no player.
+            if(player.isCollisionPlayer(enemy, gridSize, ctx)){
+                player.hp = player.hp - damage;
+                enemy.x = Math.random() * 10;
+                enemy.y= 1;
                 playEfeitos(efeitos.hit, 0.1);
             }
         });
@@ -782,11 +860,11 @@ function Game(){
         // Desenha os projéteis
         // Atualiza e desenha projéteis, removendo os que estão fora da tela
         projectiles.forEach((projectile, index) => {
-            projectile.update();
+            projectile.update(gridSize);
             if (projectile.markedForDeletion) {
                 projectiles.splice(index, 1); // Remove o projétil do array
             } else {
-                projectile.draw(ctx);
+                projectile.draw(ctx, gridSize);
             }
         });       
 
