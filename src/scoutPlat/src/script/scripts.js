@@ -12,7 +12,8 @@ const efeitos = {
     click: "../audios/efeitos/tick_002.ogg",
     ok: "../audios/efeitos/confirmation_002.ogg",
     shoot: "../audios/efeitos/select_002.ogg",
-    winner: "../audios/efeitos/BossIntro.wav"
+    winner: "../audios/efeitos/BossIntro.wav",
+    coin: "../audios/efeitos/somcoin.mp3"
 };
 
 document.addEventListener("DOMContentLoaded", ()=>{
@@ -329,11 +330,11 @@ class Enemy {
         this.canvas = canvas;
         this.gridSize= gridSize;
         
-        this.x = 1 + (Math.random() * (canvas.width / gridSize));  // Posição inicial X aleatória
+        this.x = 1 + (Math.random() * ((canvas.width-gridSize) / gridSize));  // Posição inicial X aleatória
         this.y = Math.random() * 4; // Posição inicial Y aleatória
         
-        this.speedX = Math.random() / 12; // Velocidade X aleatória
-        this.speedY = Math.random() / 15; // Velocidade Y aleatória
+        this.speedX = (Math.random() + 0.2) / 13; // Velocidade X aleatória
+        this.speedY = (Math.random() + 0.2)/ 13; // Velocidade Y aleatória
         
         this.currentFrame = 0;
         this.animationFrame = 0;
@@ -378,9 +379,11 @@ class Enemy {
         // Verifica se o inimigo saiu da tela e reinicia a posição
         if (this.x < 0 || (this.x * this.gridSize) > this.canvas.width - this.width) {
             this.speedX *= -1;
+            //this.speedY *= -1;
         }
         if (this.y < 0 || (this.y * this.gridSize) > (this.canvas.height - this.gridSize) - this.height) {
             this.speedY *= -1;
+            //this.speedX *= -1;
         }
     }
 
@@ -601,9 +604,9 @@ class Item {
         this.width = width;
         this.height = height;
         this.lastTime = 0;
-        this.sprites = [new Image()];
+        this.sprites = [new Image(), new Image(), new Image(), new Image(), new Image()];
         for (let index = 0; index < this.sprites.length; index++) {
-            this.sprites[index].src = `../assets/scoutPlat/caixa/caixa(${index}).png`;
+            this.sprites[index].src = `../assets/scoutPlat/coin/coin(${index}).png`;
         }
     }
     draw(ctx, gridSize){
@@ -614,7 +617,7 @@ class Item {
             this.width, this.height
         );
 
-        if (this.animationFrame % 20 === 0) { // Altere 10 para ajustar a velocidade da animação
+        if (this.animationFrame % 10 === 0) { // Altere 10 para ajustar a velocidade da animação
             this.currentFrame = (this.currentFrame + 1) % this.sprites.length;
         }
         this.animationFrame++;
@@ -629,11 +632,13 @@ function Game(){
     const gridSize = 64;
     const tileCount = canvas.width / gridSize;
     const linhas = canvas.height / gridSize;
+    
     let isGameover = false;
     let score = 0;
+    
     let jumpForce = -4.5;
     let gravity = 15;
-    const damage = 0;
+    const damage = 5;
     
     let player = new Player(character, 2, 8, 'Player', false);
     let npcBP = new Player("bp", 8, 8, 'NPC');
@@ -659,7 +664,8 @@ function Game(){
         new Item(8, 3.5, 32, 32),
         new Item(1, 4.5, 32, 32),
         new Item(10, 6.5, 32, 32),
-        new Item(12, 1.5, 32, 32)
+        new Item(12, 1.5, 32, 32),
+        new Item(13.5, 4.5, 32, 32)
     ];
 
     //criação dos inimigos
@@ -689,6 +695,8 @@ function Game(){
         {x: 12, y: 2, widht: gridSize, height: gridSize/2, color: "yellow", borderColor: 'black'},
         {x: 10, y: 2, widht: gridSize, height: gridSize/2, color: "yellow", borderColor: 'black'},
         {x: 8, y: 2, widht: gridSize, height: gridSize/2, color: "yellow", borderColor: 'black'},
+        {x: 13, y: 5, widht: gridSize, height: gridSize/2, color: "brown", borderColor: 'black'},
+        {x: 12, y: 6, widht: gridSize, height: gridSize/2, color: "brown", borderColor: 'black'},
     ];
 
     //chão
@@ -815,6 +823,7 @@ function Game(){
         itens.forEach((i)=> {
             if(player.isCollisionPlayer(i, gridSize, ctx)){
                 //se colidiu não desenha o item na tela e remove ele do array.
+                playEfeitos(efeitos.coin);
                 score += 1;
                 itens = itens.filter((item)=> item != i) //remove o item do array.
             }else{
