@@ -2,6 +2,8 @@ let character= "";
 let speed = 3;
 let audioPlayer= null;
 let audioEfeitos = null;
+let currentPlayer = {name: '', score: 0, character: ''};
+let namesPlayers = [];
 
 const efeitos = {
     screenInicial: "../audios/trilhaSonora/Juhani Junkala [Retro Game Music Pack] Title Screen.wav",
@@ -55,21 +57,76 @@ function setCharacter(value){
     document.getElementById('nameCharacter').textContent = value ? "Você selecionou " + value[0].toUpperCase() + value.slice(1) : "";
 }
 
+
+const inputElement = document.getElementById("namePlayer");
+function handleNamePlayer(){
+    currentPlayer = {
+        id: namesPlayers.length + 1,
+        name: inputElement.value,
+        score: 0,
+        character: character
+    }
+}
+inputElement.addEventListener('input',()=>{
+    handleNamePlayer();
+});
+
+
 function Start(){
     const modal = document.getElementById("boxSelector");
+    inputElement.value= ''; //limpa o valor do input.
 
-    if(character){
+    if(character && currentPlayer.name !== ""){
         modal.classList.add("hiddenModal");
         playEfeitos(efeitos.ok)
         Game();
     }else{
-        alert("Selecione um personagem!");
+        alert("Falta selecionar um personagem ou fornecer seu nome de player!");
     }
     
 }
 
-function setSpeed() {
-    speed = parseFloat(speedInput.value) || speed;  // Atualiza a variável 'speed'
+//adiciona o currentPlayer a lista de player ao final da partida.
+function setNamePlayer(){
+    const verify = namesPlayers.find(item=> item.name === currentPlayer.name);
+
+    if(!verify){
+        namesPlayers.push({
+            ...currentPlayer,
+            character: currentPlayer.character[0].toUpperCase() + currentPlayer.character.slice(1)
+        })
+    }else{
+        namesPlayers = namesPlayers.map(item=> {
+            if(item.name === currentPlayer.name){
+                return {
+                    ...currentPlayer,
+                    character: currentPlayer.character[0].toUpperCase() + currentPlayer.character.slice(1)
+                }
+            }else{
+                return item
+            }
+        })
+    }
+    currentPlayer= {name: "", score: ""} //limpa a variável.
+    setCharacter(""); //limpa a variável.
+
+    //atualiza a lista de playes do quadro de records.
+    renderPlayersList();
+}
+
+function renderPlayersList() {
+    // Obtém a referência ao elemento <ul>
+    const playersList = document.getElementById("listPlayers");
+
+    // Limpa a lista antes de renderizar (se necessário)
+    playersList.innerHTML = "";
+
+    // Itera sobre a lista de jogadores e cria os <li>
+    namesPlayers.sort((a, b) => a.score < b.score).forEach(player => {
+        const li = document.createElement("li");
+        li.textContent = `${player.name} - Score: ${player.score} - Char: ${player.character}`;
+        playersList.appendChild(li);
+    });
 }
 
 // Mudar a trilha sonora
@@ -625,7 +682,6 @@ class Item {
 }
 
 function Game(){
-    const speedInput = document.getElementById('speedInput');
     const canvas = document.getElementById('gameCanvas');
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');    
@@ -634,11 +690,10 @@ function Game(){
     const linhas = canvas.height / gridSize;
     
     let isGameover = false;
-    let score = 0;
     
     let jumpForce = -4.5;
     let gravity = 15;
-    const damage = 5;
+    const damage = 0;
     
     let player = new Player(character, 2, 8, 'Player', false);
     let npcBP = new Player("bp", 8, 8, 'NPC');
@@ -752,15 +807,18 @@ function Game(){
             
             const modal = document.getElementById("boxSelector");
             modal.classList.remove("hiddenModal");
-            setCharacter("");
             isGameover= true;
+
+            //atualiza a lista de playes do quadro de records.
+            setNamePlayer();
         }
     }
 
     function winner(){
         const chegou = flag01.x <= player.x && flag01.x+flag01.width >= player.x && flag01.y === player.y;
         if(chegou && player.yVelocity >= 0){
-            playEfeitos(efeitos.winner);
+            playEfeitos(efeitos.winner);            
+
             alert("Parabéns! Você completou a fase!");
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -768,8 +826,9 @@ function Game(){
             
             const modal = document.getElementById("boxSelector");
             modal.classList.remove("hiddenModal");
-            setCharacter("");
             isGameover= true;
+            //atualiza a lista de playes do quadro de records.
+            setNamePlayer();
         }
     }
 
@@ -791,25 +850,13 @@ function Game(){
     }
 
     function Console(){
-        const speedLog = document.getElementById("log");
         const logStatus = document.getElementById("logStatus");
 
         logStatus.innerHTML= `
-            Score: ${score}<br/>
+            Player: ${currentPlayer.name}<br/>
+            Score: ${currentPlayer.score || 0}<br/>
             HP: ${player.hp}<br/>
-        `;
-
-        // speedLog.innerHTML = `        
-        // Direction Y: ${player.direction ? 'left' : 'right'}<br/>
-        // isJump: ${player.isJump}<br/>
-        // Position: ${parseFloat(player.x).toFixed(2)}, ${parseFloat(player.y).toFixed(2)}<br/>
-        // VelocitY: ${parseFloat(player.yVelocity).toFixed(2)}<br/>
-        // isOnFloor: ${player.isOnFloor}<br/>
-        // Tiles size: ${gridSize}<br/>
-        // Col: ${tileCount}<br/>
-        // Row: ${linhas}<br/>
-        // Disparos: ${projectiles.length}<br/>
-        // nuvem: ${nuvens[0].x}<br/>`;        
+        `;       
     }
 
     function loop(currentTime) {
@@ -824,7 +871,7 @@ function Game(){
             if(player.isCollisionPlayer(i, gridSize, ctx)){
                 //se colidiu não desenha o item na tela e remove ele do array.
                 playEfeitos(efeitos.coin);
-                score += 1;
+                currentPlayer = {...currentPlayer, score: currentPlayer.score + 1};
                 itens = itens.filter((item)=> item != i) //remove o item do array.
             }else{
                 i.draw(ctx, gridSize);
@@ -891,7 +938,7 @@ function Game(){
         requestAnimationFrame(loop);
     }
 
-    requestAnimationFrame(loop);    
+    requestAnimationFrame(loop);
 
     document.addEventListener('keydown', (e) => {
         if (document.activeElement.tagName === 'INPUT')return;
@@ -924,21 +971,5 @@ function Game(){
 
     canvas.addEventListener("click", function (e) {
         shoot();
-    });
-
-    // Manter o foco no canvas após sair do input
-    speedInput.addEventListener('blur', function() {
-        canvas.focus();
-    });
-
-    // Remover o foco do input ao pressionar Enter
-    speedInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.target.blur();
-        }
-    });
-
-    speedInput.addEventListener('input', function(e) {
-        this.value = this.value.replace(/[^0-9]/g, '');  // Substitui qualquer caractere que não seja número por uma string vazia
     });
 }
